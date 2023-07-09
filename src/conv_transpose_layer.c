@@ -1,8 +1,8 @@
 #include "base.h"
 #include "conv_transpose_layer.h"
 #include "gemm.h"
-#include "image.h"
 
+#if 0
 struct layer_t *conv_transpose_layer_alloc(void* input_shape, void* out_channels, 
                         void* kernel_h, void *kernel_w, void* stride_h, void *stride_, 
                         void* padding, void *output_padding)
@@ -245,8 +245,6 @@ int main(int argc, char *argv[])
 
 
 
-
-
     
 
 #if 0
@@ -299,4 +297,5 @@ struct matrix_t *conv_transpose_layer_forward(struct layer_t *layer, struct matr
    return conv_transpose_layer->output_data;
 #endif
 }
+#endif
 #endif

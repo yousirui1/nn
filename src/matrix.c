@@ -24,7 +24,128 @@ void shape_print(shape_t shape)
     return shape.size;
 }
 
-matrix_t *matrix_alloc(shape_t shape)
+float matrix_get(matrix_t *mat, int num_dims, ...)
+{
+    int i;
+    va_list args;
+    float value = 0.0f;
+    shape_t shape;
+
+    shape.num_dims = num_dims;
+    va_start(args, num_dims);
+    for(i = 0; i < num_dims; i++)
+    {
+        shape.dims[i] = va_arg(args, int);
+    }
+    va_end(args);
+
+    switch(num_dims)
+    {
+        case 1:
+            value =  mat->data[shape.dims[0]];
+            break;
+
+        case 2:
+        {
+            float (*data)[mat->shape.dims[1]] = mat->data;
+            value = data[shape.dims[0]][shape.dims[1]];
+            break;
+        }
+        case 3:
+        {
+
+            float (*data)[mat->shape.dims[1]][mat->shape.dims[2]] = mat->data;
+            value = data[shape.dims[0]][shape.dims[1]][shape.dims[2]];
+            break;
+        }
+
+        case 4:
+        {
+            float (*data)[mat->shape.dims[1]][mat->shape.dims[2]][mat->shape.dims[3]] = mat->data;
+            value = data[shape.dims[0]][shape.dims[1]][shape.dims[2]][shape.dims[3]];
+            break;
+        }
+
+        default:
+            LOG_DEBUG("matrix not support num_dims %d", num_dims);
+            return ERROR;
+    }
+
+    return value;
+}
+
+
+int matrix_set(matrix_t *mat, float value, int num_dims, ...)
+{
+    int i;
+    va_list args;
+    shape_t shape;
+
+    shape.num_dims = num_dims;
+    va_start(args, num_dims);
+    for(i = 0; i < num_dims; i++)
+    {
+        shape.dims[i] = va_arg(args, int);
+    }
+    va_end(args);
+
+    switch(num_dims)
+    {
+        case 1:
+            mat->data[shape.dims[0]] = value;
+            break;
+
+        case 2:
+        {
+            float (*data)[mat->shape.dims[1]] = mat->data;
+            data[shape.dims[0]][shape.dims[1]] = value;
+            break;
+        }
+        case 3:
+        {
+
+            float (*data)[mat->shape.dims[1]][mat->shape.dims[2]] = mat->data;
+            data[shape.dims[0]][shape.dims[1]][shape.dims[2]] = value;
+            break;
+        }
+
+        case 4:
+        {
+            float (*data)[mat->shape.dims[1]][mat->shape.dims[2]][mat->shape.dims[3]] = mat->data;
+            data[shape.dims[0]][shape.dims[1]][shape.dims[2]][shape.dims[3]] = value;
+            break;
+        }
+
+        default:
+            return ERROR;
+    }
+    return SUCCESS;
+}
+
+
+
+matrix_t *matrix_alloc(int num_dims, ...)
+{
+    matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
+    if(out)
+    {
+        int i;
+        va_list args;
+        out->shape.num_dims = num_dims;
+        va_start(args, num_dims);
+        for(i = 0; i < num_dims; i++)
+        {
+            out->shape.dims[i] = va_arg(args, int);
+        }
+        va_end(args);
+        get_shape_size(&out->shape);
+        out->data = (float *)malloc(sizeof(float) * out->shape.size);
+    }
+    return out;
+}
+
+
+matrix_t *matrix_alloc_shape(shape_t shape)
 {
     matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
     if(out)
@@ -37,7 +158,7 @@ matrix_t *matrix_alloc(shape_t shape)
 }
 
 
-matrix_t *matrix_alloc_empty(shape_t shape)
+matrix_t *matrix_empty_shape(shape_t shape)
 {
     matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
     if(out)
@@ -47,6 +168,27 @@ matrix_t *matrix_alloc_empty(shape_t shape)
     }
     return out;
 }
+
+
+matrix_t *matrix_empty(int num_dims, ...)
+{
+    matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
+    if(out)
+    {
+        int i;
+        va_list args;
+        out->shape.num_dims = num_dims;
+        va_start(args, num_dims);
+        for(i = 0; i < num_dims; i++)
+        {
+            out->shape.dims[i] = va_arg(args, int);
+        }
+        va_end(args);
+        get_shape_size(&out->shape);
+    }
+    return out;
+}
+
 
 void matrix_free(matrix_t *mat)
 {
@@ -62,7 +204,7 @@ void matrix_free(matrix_t *mat)
 
 matrix_t *matrix_copy(matrix_t *src)
 {
-    matrix_t *out = matrix_alloc(src->shape);
+    matrix_t *out = matrix_alloc_shape(src->shape);
     if(out)
     {
         memcpy(out->data, src->data, sizeof(float) * src->shape.size);

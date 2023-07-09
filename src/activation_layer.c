@@ -166,13 +166,14 @@ int activation_save_weight(struct layer_t *layer, void *weight)
 matrix_t *padding(struct layer_t *layer, matrix_t *input_data)
 {
     struct activation_layer_t *activation_layer = (struct activation_layer_t *)layer->handle;
-
+#if 0
     if(NULL == activation_layer->pad_output_data)
     {
         shape_t shape = input_data->shape;
         shape.dims[0] += activation_layer->padding_h;
         shape.dims[1] += activation_layer->padding_w;
         shape.dims[2] += activation_layer->padding_c;
+
         activation_layer->pad_output_data = matrix_alloc(shape);
 
     }
@@ -191,6 +192,7 @@ matrix_t *padding(struct layer_t *layer, matrix_t *input_data)
         shape.dims[2] += activation_layer->padding_c;
         activation_layer->pad_output_data = matrix_alloc(shape);
     }
+#endif
 
     shape_print(input_data->shape);
 
@@ -229,7 +231,7 @@ struct matrix_t *activation_layer_forward(struct layer_t *layer, struct matrix_t
    
     if(NULL == activation_layer->output_data)
     {   
-        activation_layer->output_data = matrix_alloc(input_data->shape);
+        activation_layer->output_data = matrix_alloc_shape(input_data->shape);
     }   
 
     for(i = 0; i < input_data->shape.size; i++)

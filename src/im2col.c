@@ -1,5 +1,46 @@
+#include "base.h"
 #include "im2col.h"
-#include <stdio.h>
+
+void im2col_cpu(matrix_t *data,
+     int ksize_h, int ksize_w,  int stride_h, int stride_w, int pad, 
+     matrix_t *data_col) 
+{
+
+    int c, h, w;
+    int channel_col = data_col->shape.dims[C];
+    int height_col = data_col->shape.dims[H];
+    int width_col = data_col->shape.dims[W];
+    int im_col, im_row, c_im, h_offset, w_offset;
+    int height = data->shape.dims[H];
+    int width = data->shape.dims[W];
+    int channel = data->shape.dims[C];
+    int num_dims = data->shape.num_dims;
+
+    //to do default batch_size = 1
+    for(h = 0;  h < height_col; h++)
+    {
+        for(w = 0; w < width_col; w++)
+        {
+            for(c = 0; c < channel_col; c++)
+            {
+                h_offset = (c / ksize_w) % ksize_h;
+                w_offset = c % ksize_w;
+                c_im = c / ksize_w / ksize_h;
+
+                im_row = h_offset + h * stride_h - pad; //im_row kernel 在data 索引
+                im_col = w_offset + w * stride_w - pad; //im_col kernel 在data 索引
+
+                if(im_row <  0 || im_col < 0 || im_row >= height || im_col >= width)  //超过data index 都是pad,直接=0
+                    matrix_set(data_col, 0.0f, num_dims, 1,  h, w, c);
+                else
+                    matrix_set(data_col, matrix_get(data, num_dims, 1, im_row, im_col, c_im),  num_dims, 1, h, w, c);
+            }
+        }
+    }
+
+}
+
+#if 0
 /*
 **  从输入的多通道数组im（存储图像数据）中获取指定行、列、、通道数处的元素值
 **  输入： im      输入，所有数据存成一个一维数组，例如对于3通道的二维图像而言，
@@ -112,4 +153,5 @@ void im2col_cpu(float* data_im,
         }
     }
 }
+#endif
 

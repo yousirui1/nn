@@ -4,16 +4,16 @@
 
 #include <stdbool.h>
 
-void gemm_bin(int M, int N, int K, float ALPHA, 
-        char  *A, int lda, 
-        float *B, int ldb,
-        float *C, int ldc);
+void gemm_bin(int iM, int iN, int iK, float ALPHA, 
+        char  *cA, int lda, 
+        float *fB, int ldb,
+        float *fC, int ldc);
         
-void gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
-                    float *A, int lda, 
-                    float *B, int ldb,
+void gemm(int TA, int TB, int iM, int iN, int iK, float ALPHA, 
+                    float *fA, int lda, 
+                    float *fB, int ldb,
                     float BETA,
-                    float *C, int ldc);
+                    float *fC, int ldc);
 
 /*
 **  功能：矩阵计算，完成C = ALPHA * A * B + BETA * C，
@@ -31,10 +31,10 @@ void gemm(int TA, int TB, int M, int N, int K, float ALPHA,
 **  说明：此函数是用C实现矩阵乘法运算，这部分代码应该是模仿的Caffe中的math_functions.cpp的代码
 **       参考博客：http://www.voidcn.com/blog/thy_2014/article/p-6149690.html
 */
-void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA, 
-        float *A, int lda, 
-        float *B, int ldb,
+void gemm_cpu(int TA, int TB, int iM, int iN, int iK, float ALPHA, 
+        float *fA, int lda, 
+        float *fB, int ldb,
         float BETA,
-        float *C, int ldc);
+        float *fC, int ldc);
 
 #endif //  __GEMM_H__

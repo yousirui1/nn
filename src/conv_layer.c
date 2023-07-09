@@ -1,7 +1,7 @@
 #include "base.h"
 #include "conv_layer.h"
 #include "gemm.h"
-#include "image.h"
+#include "im2col.h"
 
 struct layer_t * conv_layer_alloc(void* out_channels, void *kernel_height, void* kernel_width, void *stride_height, 
                                     void *stride_width,  void *padding)
@@ -30,8 +30,6 @@ struct layer_t * conv_layer_alloc(void* out_channels, void *kernel_height, void*
     conv_layer->stride_w = *(int *)stride_width;
     conv_layer->stride_h = *(int *)stride_height;;
     conv_layer->padding = *(int *)padding;
-    conv_layer->output_shape.num_dims = 3; //default 2d
-    conv_layer->output_shape.dims[0] = conv_layer->out_channels;
 
 	//conv_layer->weights = matrix_alloc(conv_layer->out_channels, conv_layer->col.dims[2]);
     //conv_layer->bias = matrix_alloc(conv_layer->out_channels, 1);
@@ -124,45 +122,72 @@ struct matrix_t *conv_layer_forward(struct layer_t *layer, struct matrix_t *inpu
     int i;
     struct conv_layer_t *conv_layer = (struct conv_layer_t *)layer->handle;
 
-    int input_channels = input_data->shape.dims[0];
-    int input_height = input_data->shape.dims[1];
-    int input_width = input_data->shape.dims[2];
+    int batch_size = input_data->shape.dims[N];
+    int input_channels = input_data->shape.dims[C];
+    int input_height = input_data->shape.dims[H];
+    int input_width = input_data->shape.dims[W];
     int kernel_h = conv_layer->kernel_h;
     int kernel_w = conv_layer->kernel_w;
     int stride_h = conv_layer->stride_h;
     int stride_w = conv_layer->stride_w;
     int padding = conv_layer->padding;
-    int batch_size = 1;
+    int height_col = 0;
+    int weight_col = 0;
+    int channel_col = 0;
+    int output_channels = 0;
+    int output_height = 0;
+    int output_width = 0;
 
     shape_print(input_data->shape);
-
     if(NULL == conv_layer->output_data)
     {
-        conv_layer->output_shape.num_dims = 3;
-        conv_layer->output_shape.dims[1] = ((input_data->shape.dims[1] - kernel_h + (2 * padding)) / stride_h) + 1;
-        conv_layer->output_shape.dims[2] = ((input_data->shape.dims[2] - kernel_w + (2 * padding)) / stride_w) + 1;
-        conv_layer->output_shape.size = get_shape_size(&conv_layer->output_shape);
-        conv_layer->output_data = matrix_alloc(conv_layer->output_shape);
-    }
+        output_channels = conv_layer->out_channels;
+        output_height = ((input_height - kernel_h + (2 * padding)) / stride_h) + 1;
+        output_width = ((input_width - kernel_w + (2 * padding)) / stride_w) + 1;
 
-    int output_channels = conv_layer->output_data->shape.dims[0];
-    int output_height = conv_layer->output_data->shape.dims[1];
-    int output_width = conv_layer->output_data->shape.dims[2];
+        conv_layer->output_data = matrix_alloc(4, batch_size,  output_height, 
+                output_width, output_channels);
+    }
+    else
+    {
+        output_height = conv_layer->output_data->shape.dims[H];
+        output_width = conv_layer->output_data->shape.dims[W];
+        output_channels = conv_layer->output_data->shape.dims[C];
+    }
+    LOG_DEBUG("output: ");
+    shape_print(conv_layer->output_data->shape);
+
+    if(NULL == conv_layer->col_data)  
+    {
+        height_col = (input_height + 2 * padding - kernel_h) / stride_h + 1;
+        weight_col = (input_width + 2 * padding - kernel_w) / stride_w + 1;
+        channel_col = input_channels * kernel_w  * kernel_h; 
+        conv_layer->col_data = matrix_alloc(4, batch_size,  channel_col, height_col, weight_col);
+    }
+    else
+    {
+        height_col = conv_layer->col_data->shape.dims[H];
+        weight_col = conv_layer->col_data->shape.dims[W];
+        channel_col = conv_layer->col_data->shape.dims[C];
+    }
+    LOG_DEBUG("col_data: ");
+    shape_print(conv_layer->col_data->shape);
+
 
     int m = output_channels;
     int k = kernel_h * kernel_w * input_channels;
     int n = output_height * output_width;
 
     float *a = conv_layer->weights->data;
-    float *b = (float *)malloc(n * k * sizeof(float));
+    float *b = conv_layer->col_data->data;
     float *c = conv_layer->output_data->data;
 
 	//transpose_weights(a, output_channels, kernel_h, kernel_w);
 
     for(i = 0; i < batch_size; i++)
     {
-        im2col_cpu(input_data->data, input_channels, input_height, input_width,
-                kernel_h, kernel_w, stride_h, stride_w, padding, b);
+        im2col_cpu(input_data, kernel_h, kernel_w, stride_h, stride_w, padding,
+                    conv_layer->col_data);
         
         gemm(0, 0, m, n, k, 1, a, k, b, n, 1, c, n);
 		add_biases(c, conv_layer->bias->data, conv_layer->out_channels, n);
@@ -176,7 +201,7 @@ struct matrix_t *conv_layer_backward(struct layer_t *layer, struct matrix_t *inp
 
 }
 
-#define CONV_LAYER_TEST 1
+//#define CONV_LAYER_TEST 1
 #if CONV_LAYER_TEST
 
 float test_weights[] = {

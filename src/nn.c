@@ -191,7 +191,9 @@ void nn_deinit(struct nn_t *nn)
     }
 }
 
-#if 0
+
+#define NN_TEST 1
+#if NN_TEST
 int main(int argc, char *argv[])
 {
 	struct nn_t nn;
@@ -205,20 +207,22 @@ int main(int argc, char *argv[])
 
     matrix_t *input_data = NULL;
 
-    input_shape.num_dims = 3;
-    input_shape.dims[0] = 2;
-    input_shape.dims[1] = 257;
-    input_shape.dims[2] = 1;
+    input_shape.num_dims = 4;
+    input_shape.dims[N] = 1;
+    input_shape.dims[H] = 2;
+    input_shape.dims[W] = 257;
+    input_shape.dims[C] = 1;
 
-    input_data = matrix_alloc_empty(input_shape);
+    input_data = matrix_empty_shape(input_shape);
     input_data->data = input;
 
     nn_init(&nn, 1, "test_nn");
 
-    reshape.num_dims = 3;
-    reshape.dims[0] = 2;
-    reshape.dims[1] = 257; 
-    reshape.dims[2] = 1; 
+    reshape.num_dims = 4;
+    reshape.dims[N] = 1;
+    reshape.dims[H] = 2;
+    reshape.dims[W] = 257; 
+    reshape.dims[C] = 1; 
 
     /* -------------- block 0 -----------------*/
     nn_add_layer(&nn, INPUT_LAYER, "input", 1, &reshape); 
@@ -324,4 +328,4 @@ int main(int argc, char *argv[])
     nn_forward(&nn, input_data);
     //nn_loss(&nn);
 }
-#endif
+#endif //NN_TEST

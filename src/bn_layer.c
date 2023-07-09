@@ -102,7 +102,7 @@ struct matrix_t *bn_layer_forward(struct layer_t *layer, struct matrix_t *input_
    
     if(NULL == bn_layer->output_data)
     {
-        bn_layer->output_data = matrix_alloc(input_data->shape);
+        bn_layer->output_data = matrix_alloc_shape(input_data->shape);
     }
 
     for (i = 0; i < input_data->shape.size; i++) 

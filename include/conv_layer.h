@@ -12,8 +12,6 @@ struct conv_weight_t
 
 struct conv_layer_t
 {
-    struct shape_t output_shape;
-
     int out_channels;
     int kernel_w;
     int kernel_h;
@@ -22,6 +20,7 @@ struct conv_layer_t
     int padding;
 
     struct matrix_t *output_data;
+    struct matrix_t *col_data;
 
     struct matrix_t *weights;
     struct matrix_t *bias;

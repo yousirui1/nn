@@ -71,7 +71,7 @@ void read_layer(FILE* file, Layer* layer) {
 
 void nn_load_weight(struct nn_t *nn)
 {
-    FILE* file = fopen("weights.bin", "rb");
+    FILE* file = fopen("weights/weights.bin", "rb");
     if (file == NULL) {
         printf("Failed to open file.\n");
         return 1;
@@ -115,8 +115,8 @@ void nn_load_weight(struct nn_t *nn)
             
             if(STRPREFIX(layers[i].type, "Conv2D"))
             {
-                conv_weight.weights = matrix_alloc_empty(weight_shape[0]);
-                conv_weight.bias = matrix_alloc_empty(weight_shape[1]); 
+                conv_weight.weights = matrix_empty_shape(weight_shape[0]);
+                conv_weight.bias = matrix_empty_shape(weight_shape[1]); 
                 conv_weight.weights->data = layers[i].weights[0];
                 conv_weight.bias->data = layers[i].weights[1];
                 if(STRPREFIX(layer->layer_name, "conv_2"))
@@ -129,10 +129,10 @@ void nn_load_weight(struct nn_t *nn)
             }
             else if(STRPREFIX(layers[i].type, "BatchNormalization"))
             {
-               	bn_weight.weights = matrix_alloc_empty(weight_shape[0]); 
-    			bn_weight.bias = matrix_alloc_empty(weight_shape[1]); 
-    			bn_weight.mean = matrix_alloc_empty(weight_shape[2]); 
-    			bn_weight.variance = matrix_alloc_empty(weight_shape[3]); 
+               	bn_weight.weights = matrix_empty_shape(weight_shape[0]); 
+    			bn_weight.bias = matrix_empty_shape(weight_shape[1]); 
+    			bn_weight.mean = matrix_empty_shape(weight_shape[2]); 
+    			bn_weight.variance = matrix_empty_shape(weight_shape[3]); 
 
     			bn_weight.weights->data = layers[i].weights[0];
     			bn_weight.bias->data = layers[i].weights[1];
@@ -143,7 +143,7 @@ void nn_load_weight(struct nn_t *nn)
             }
             else if(STRPREFIX(layers[i].type,"PReLU"))
             {
-    			p_relu_weight.weights = matrix_alloc_empty(weight_shape[0]); 
+    			p_relu_weight.weights = matrix_empty_shape(weight_shape[0]); 
     			p_relu_weight.weights->data = layers[i].weights[0];
 
                 layer->load_weight(layer, &p_relu_weight);
@@ -151,7 +151,7 @@ void nn_load_weight(struct nn_t *nn)
             else if(STRPREFIX(layers[i].type, "Conv2DTranspose"))
             {
 #if 0
-				conv_transpose_weight.weights = matrix_alloc_empty(last_shape[0], num_elements[0]/last_shape[0]);
+				conv_transpose_weight.weights = matrix_empty_shape(last_shape[0], num_elements[0]/last_shape[0]);
     			conv_transpose_weight.weights->data = layers[i].weights[0];;
                 layer->load_weight();
                 layer->load_weight(layer, &conv_transpose_weight);

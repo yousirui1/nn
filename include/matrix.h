@@ -22,9 +22,16 @@ struct matrix_t{
 
 typedef struct matrix_t matrix_t;
 
-//matrix_t *matrix_alloc(int rows, int cols);
-//matrix_t *matrix_alloc_empty(int rows, int cols);
+matrix_t *matrix_alloc(int num_dims, ...);
+matrix_t *matrix_alloc_shape(shape_t shape);
+matrix_t *matrix_empty(int num_dims, ...);
+matrix_t *matrix_shape_empty(shape_t shape);
+matrix_t *matrix_empty_shape(shape_t shape);
+
+int matrix_set(matrix_t *mat, float value, int num_dims, ...);
+float matrix_get(matrix_t *mat, int num_dims, ...);
 void matrix_free(matrix_t *mat);
+
 matrix_t *matrix_copy(matrix_t *src);
 int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar);
 matrix_t* matrix_sum(matrix_t *dst, matrix_t *src,  float scalar);
@@ -34,8 +41,6 @@ int matrix_apply_copy(matrix_t *dst, matrix_t *src, int pos);
 void matrix_print(matrix_t* mat);
 //float matrix_get(const matrix_t *mat, int row, int col);
 //void matrix_set(matrix_t *mat, int row, int col, float value);
-matrix_t *matrix_alloc(shape_t shape);
-matrix_t *matrix_alloc_empty(shape_t shape);
 
 int get_shape_size(shape_t *shape);
 void shape_print(shape_t shape);

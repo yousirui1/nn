@@ -1,0 +1,13 @@
+*.ipch
+Debug
+.vs
+Release
+*.user
+*.d
+*.o
+*.obj
+debug.linux
+release.linux
+build
+err.log
+

@@ -137,14 +137,12 @@ int nn_add_layer(struct nn_t *nn, int layer_type,  const char *layer_name, int n
             layer->load_weight = conv_load_weight;
             break;
         case CONV_TRANSPOSE_LAYER:
-#if 0
-            layer = conv_transpose_layer_alloc(params[0], params[1]);
+            layer = conv_transpose_layer_alloc(params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
             layer->forward = conv_transpose_layer_forward;
             layer->backward = conv_transpose_layer_backward;;
             layer->free = conv_transpose_layer_free;
             layer->save_weight = conv_transpose_save_weight;
             layer->load_weight = conv_transpose_load_weight;
-#endif
             break;
 
         case LSTM_LAYER:

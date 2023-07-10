@@ -71,9 +71,8 @@ int bn_load_weight(struct layer_t *layer, void *weight)
             matrix_free(bn_layer->mean);
         }
         bn_layer->mean = matrix_copy(bn_weight->mean);
-        //bn_layer->num_channels = bn_layer->weights->shape.dims[bn_layer->weights->shape.num_dims - 1];
-        //BHWC
-        bn_layer->num_channels = bn_layer->weights->shape.dims[0];  // BCHW
+
+        bn_layer->num_channels = bn_layer->weights->shape.dims[C];  
     }
     return ERROR;
 }
@@ -90,7 +89,7 @@ struct matrix_t *bn_layer_forward(struct layer_t *layer, struct matrix_t *input_
     float normalized_value;
 	struct bn_layer_t *bn_layer = (struct bn_layer_t *)layer->handle;
 
-    if(bn_layer->num_channels != input_data->shape.dims[input_data->shape.num_dims - 1])
+    if(bn_layer->num_channels != input_data->shape.dims[C])
     {
         printf("input_shape: ");
         shape_print(input_data->shape);

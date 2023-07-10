@@ -12,6 +12,7 @@ struct conv_weight_t
 
 struct conv_layer_t
 {
+    int filters;
     int out_channels;
     int kernel_w;
     int kernel_h;

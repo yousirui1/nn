@@ -24,23 +24,25 @@
 
 #define STRPREFIX(a,b) (strncmp((a),(b),strlen((b))) == 0)
 
-#define BHWC 1  // tf
-//#define BCHW 1  //torch darknet
+#define NCHW      1
+//#define NHWC      1
 
-#ifdef BCHW
-    #define N 0
-    #define C 1
-    #define H 2
-    #define W 3
-#elif BHWC
-    #define N 0
-    #define H 1
-    #define W 2
-    #define C 3
-#else
+#ifdef NCHW
+// torch (batch_size, channels, height, width)
+// darknet (batch_size, channels, height, width)
+#define N 0
+#define C 1
+#define H 2
+#define W 3
+#elif NHWC
+// tf (batch_size, height, width, channels)
+#define N 0
+#define H 1
+#define W 2
+#define C 3
+#else   //NHWC
 
-
-#endif // BCHW
+#endif  //NCHW
 
 
 #endif //  __BASE_H__

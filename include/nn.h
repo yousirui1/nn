@@ -9,11 +9,17 @@ enum nn_mode{
     NN_EAVL,
 };
 
+enum nn_data_seq{
+    CHW,
+    HWC,
+};
+
 struct nn_t
 {
     char nn_name[128];
     int batch_size;
     int layer_size;
+    int data_seq;              //CHW or HWC
     struct list_head layer_root;
 };
 

@@ -1,10 +1,10 @@
 #include "base.h"
 #include "conv_transpose_layer.h"
 #include "gemm.h"
+#include "im2col.h"
 
-#if 0
-struct layer_t *conv_transpose_layer_alloc(void* input_shape, void* out_channels, 
-                        void* kernel_h, void *kernel_w, void* stride_h, void *stride_, 
+struct layer_t *conv_transpose_layer_alloc(void* filters, 
+                        void* kernel_h, void *kernel_w, void* stride_h, void *stride_w, 
                         void* padding, void *output_padding)
 {
     struct layer_t *layer = NULL;
@@ -25,22 +25,14 @@ struct layer_t *conv_transpose_layer_alloc(void* input_shape, void* out_channels
         return NULL;
     }     
 
-    conv_transpose_layer->input_shape = *(struct shape_t *)input_shape;
-    conv_transpose_layer->out_channels = *(int *)out_channels;
+    conv_transpose_layer->out_channels = *(int *)filters;
     conv_transpose_layer->kernel_h = *(int *)kernel_h;
     conv_transpose_layer->kernel_w = *(int *)kernel_w;
     conv_transpose_layer->stride_h = *(int *)stride_h;
     conv_transpose_layer->stride_w = *(int *)stride_w;
     conv_transpose_layer->padding = *(int *)padding;
     conv_transpose_layer->output_padding = *(int *)output_padding;
-
- 	//conv_transpose_layer->weights = matrix_alloc(conv_transpose_layer->out_channels, conv_transpose_layer->col.dims[2]);
-    
-    //conv_transpose_layer->bias = matrix_alloc(conv_transpose_layer->out_channels, 1);
-
-    //conv_transpose_layer->output_data = matrix_alloc(1, conv_transpose_layer->output_size);
-
-	//conv_transpose_layer->col.dims[2] = 
+    conv_transpose_layer->output_shape.dims[C] = conv_transpose_layer->out_channels; 
 
     layer->handle = conv_transpose_layer;
 	return layer;
@@ -50,16 +42,31 @@ void conv_transpose_layer_free(struct layer_t *layer)
 {
     struct conv_transpose_layer_t *conv_transpose_layer = (struct conv_transpose_layer_t *)layer->handle;
     if(layer)
-    {
+    {   
         if(conv_transpose_layer)
         {
-            free(conv_transpose_layer);
-        }
+            if(conv_transpose_layer->temp_data)
+                matrix_free(conv_transpose_layer->temp_data);
+             
+            if(conv_transpose_layer->output_data)
+                matrix_free(conv_transpose_layer->output_data);
 
+            if(conv_transpose_layer->weights)
+                matrix_free(conv_transpose_layer->weights);
+
+            if(conv_transpose_layer->bias)
+                matrix_free(conv_transpose_layer->bias);
+
+            conv_transpose_layer->temp_data = NULL;
+            conv_transpose_layer->output_data = NULL;
+            conv_transpose_layer->weights = NULL;
+            conv_transpose_layer->bias = NULL;
+            free(conv_transpose_layer);
+        }   
         conv_transpose_layer = NULL;
         layer->handle = NULL;
         free(layer);
-    }
+    }  
 }
 
 int conv_transpose_load_weight(struct layer_t *layer, void *weight)
@@ -93,38 +100,66 @@ int conv_transpose_save_weight(struct layer_t *layer, void *weight)
 
 }
 
-static void add_biases(float* out, float* biases, int out_c, int out_cols) {
-    for (int i = 0; i < out_c; i++) {
-        float bias = biases[i];
-        for (int j = 0; j < out_cols; j++) {
-            out[i * out_cols + j] += bias;
-        }
-    }   
-}
 
 struct matrix_t *conv_transpose_layer_forward(struct layer_t *layer, struct matrix_t *input_data)
 {
-    //int batch, in_channel, out_channel, out_h, out_w, in_h, in_w, kernel_h, kernel_w;
-    int batch_size = 1;
+    int i;
+    int batch_size = input_data->shape.dims[N];;
     struct conv_transpose_layer_t *conv_transpose_layer = (struct conv_transpose_layer_t *)layer->handle;
-    int input_h = conv_transpose_layer->col.dims[1];
-    int input_w = conv_transpose_layer->col.dims[0];
-    int input_c = conv_transpose_layer->col.dims[1];
+#if 0
+    int input_c = input_data->shape.dims[C];
+    int input_h = input_data->shape.dims[H];
+    int input_w = input_data->shape.dims[W];
 
-    int output_h = conv_transpose_layer->col.dims[1];
-    int output_w = conv_transpose_layer->col.dims[0];
-    int output_c = conv_transpose_layer->col.dims[1];
+    int kernel_w = conv_transpose_layer->kernel_w;
+    int kernel_h = conv_transpose_layer->kernel_h;
 
-    int kernel_w = conv_transpose_layer->kernel_size;
-    int kernel_h = conv_transpose_layer->kernel_size;
-
-    int stride_h = conv_transpose_layer->stride_w;
-    int stride_w = conv_transpose_layer->stride;
+    int stride_h = conv_transpose_layer->stride_h;
+    int stride_w = conv_transpose_layer->stride_w;
     int padding = conv_transpose_layer->padding;
     int output_padding = conv_transpose_layer->output_padding;
 
+    if(NULL == conv_transpose_layer->output_data)
+    {
+		//chw
+        conv_transpose_layer->output_shape.num_dims = input_data->shape.num_dims;
+    	conv_transpose_layer->output_shape.dims[N] = batch_size;
+    	conv_transpose_layer->output_shape.dims[H] = input_h * stride_h + padding * 2 - output_padding;
+    	conv_transpose_layer->output_shape.dims[W] = input_w * stride_w + padding * 2 - output_padding;
+        conv_transpose_layer->output_data = matrix_alloc(conv_transpose_layer->output_shape);
+    }
 
-	return output;
+    int output_c = conv_transpose_layer->output_data->shape.dims[C];
+    int output_h = conv_transpose_layer->output_data->shape.dims[H];
+    int output_w = conv_transpose_layer->output_data->shape.dims[W];
+
+    int m = kernel_h * kernel_w * output_c;
+    int n = input_h * input_w;
+    int k = input_c;
+
+    if(NULL == conv_transpose_layer->temp_data)
+    {
+        shape_t shape;
+        shape.num_dims = 2;
+        shape.dims[0] = n;
+        shape.dims[1] = m;
+        conv_transpose_layer->temp_data = matrix_alloc(shape);
+    }
+
+    float *a = conv_transpose_layer->weights->data;
+    float *b = input_data->data;
+    float *c = conv_transpose_layer->temp_data->data;
+
+    for(i = 0; i < batch_size; i++)
+    {   
+        b = b + i * input_c * input_h * input_w;
+
+        gemm_cpu(1, 0, m, n, k, 1, a, m, b, n, 0, c, n); 
+        col2im_cpu(c, output_c, output_h, output_w, kernel_h, kernel_w, stride_h, stride_w, padding, conv_transpose_layer->output_data + output_h * output_c * output_w);
+        add_biases(c, conv_transpose_layer->bias->data, m, n); 
+    }   
+#endif
+    return conv_transpose_layer->output_data;
 }
 
 struct matrix_t *conv_transpose_layer_backward(struct layer_t *layer, struct matrix_t *input_data)
@@ -297,5 +332,4 @@ struct matrix_t *conv_transpose_layer_forward(struct layer_t *layer, struct matr
    return conv_transpose_layer->output_data;
 #endif
 }
-#endif
 #endif

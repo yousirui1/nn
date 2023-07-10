@@ -55,6 +55,12 @@ float softmax(float x)
 
 }
 
+float dropout(float x, float alpha)
+{
+    //alpha = (0, 1.f);
+    return alpha * x;
+}
+
 struct layer_t * activation_layer_alloc(void *_activation_name, void *padding_h, void *padding_w, void *offset)
 {
     struct layer_t *layer = NULL;

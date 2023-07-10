@@ -21,7 +21,6 @@ void shape_print(shape_t shape)
         printf("%d ", shape.dims[i]);
     }
     printf("]\n");
-    return shape.size;
 }
 
 float matrix_get(matrix_t *mat, int num_dims, ...)

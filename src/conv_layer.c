@@ -47,6 +47,22 @@ void conv_layer_free(struct layer_t *layer)
     {
         if(conv_layer)
         {
+            //if(conv_layer->temp_data)
+             //   matrix_free(conv_layer->temp_data);
+            
+            if(conv_layer->output_data)
+                matrix_free(conv_layer->output_data);
+
+            if(conv_layer->weights)
+                matrix_free(conv_layer->weights);
+
+            if(conv_layer->bias)
+                matrix_free(conv_layer->bias);
+
+            //conv_layer->temp_data = NULL;
+            conv_layer->output_data = NULL;
+            conv_layer->weights = NULL;
+            conv_layer->bias = NULL;
             free(conv_layer);
         }
 
@@ -89,33 +105,7 @@ int conv_save_weight(struct layer_t *layer, void *weight)
 
 }
 
-void add_biases(float* out, float* biases, int out_c, int out_cols) {
-    for (int i = 0; i < out_c; i++) 
-    {
-        float bias = biases[i];
-        for (int j = 0; j < out_cols; j++) 
-        {
-            out[i * out_cols + j] += bias;
-        }
-    }   
-}
 
-
-void transpose_weights(float *weights, int channels, int size_h, int size_w)
-{
-    float *tmp = (float *)calloc(size_h * size_w * channels, sizeof(float));
-    for (int i = 0; i < size_h; ++i) {
-        for (int j = 0; j < size_w; ++j) {
-            for (int k = 0; k < channels; ++k) {
-                int dst_index = i * size_w * channels + j * channels + k;
-                int src_index = k * size_h * size_w + i * size_w + j;
-                tmp[dst_index] = weights[src_index];
-            }
-        }
-    }
-    memcpy(weights, tmp, size_h * size_w * channels * sizeof(float));
-    free(tmp);
-}
 
 struct matrix_t *conv_layer_forward(struct layer_t *layer, struct matrix_t *input_data)
 {

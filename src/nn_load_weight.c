@@ -121,8 +121,8 @@ void nn_load_weight(struct nn_t *nn)
                 conv_weight.bias->data = layers[i].weights[1];
                 if(STRPREFIX(layer->layer_name, "conv_2"))
                 {
-                    matrix_print(conv_weight.weights);
-                    matrix_print(conv_weight.bias);
+                    matrix_print(conv_weight.weights, NULL);
+                    matrix_print(conv_weight.bias, NULL);
                 }
 
                 layer->load_weight(layer, &conv_weight);

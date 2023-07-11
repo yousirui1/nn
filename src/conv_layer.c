@@ -191,7 +191,7 @@ struct matrix_t *conv_layer_backward(struct layer_t *layer, struct matrix_t *inp
 
 }
 
-//#define CONV_LAYER_TEST 1
+#define CONV_LAYER_TEST 1
 #if CONV_LAYER_TEST
 
 float test_weights[] = {
@@ -243,8 +243,8 @@ int main(int argc, char *argv[])
     // darknet(batch_size, channels, height, width)
 
     int out_channels = 2;
-    int kernel_h = 3;
-    int kernel_w = 3;
+    int kernel_h = 2;
+    int kernel_w = 2;
     int stride_h = 2;
     int stride_w = 1;
     int padding = 0;
@@ -261,14 +261,15 @@ int main(int argc, char *argv[])
     struct matrix_t *output_data = NULL;
     struct matrix_t *input_data = NULL;
 
-	input_shape.num_dims = 3;
-    input_shape.dims[0] = 3;    //c
-    input_shape.dims[1] = 5;    //h
-    input_shape.dims[2] = 5;    //w
+	input_shape.num_dims = 4;
+    input_shape.dims[N] = 1;
+    input_shape.dims[C] = 3;    
+    input_shape.dims[H] = 5;    
+    input_shape.dims[W] = 5;    
 
     //input_data = matrix_alloc_empty(input_shape);
     //input_data->data = input;
-    input_data = matrix_alloc(input_shape);
+    input_data = matrix_alloc_shape(input_shape);
 	//memset(input_data->data, 1, input_data->shape.size * sizeof(float));	
     for(int i = 0; i < input_data->shape.size; i++)
     {
@@ -276,40 +277,33 @@ int main(int argc, char *argv[])
         //input_data->data[i] = 1.0f;
     }
 
-    matrix_print(input_data);
-
-    weight_shape.num_dims = 4;
-    weight_shape.dims[0] = 2;
-    weight_shape.dims[1] = 2;
-    weight_shape.dims[2] = 3;
-    weight_shape.dims[3] = 2;
 
     //conv_weight.weights = matrix_alloc_empty(weight_shape);
     //conv_weight.weights->data = weights;
-    conv_weight.weights = matrix_alloc(weight_shape);
+    conv_weight.weights = matrix_alloc(4, 2, 3, 2, 2);
 	//memset(conv_weight.weights->data, 1, conv_weight.weights->shape.size * sizeof(float));	
     for(int i = 0; i < conv_weight.weights->shape.size; i++)
     {
-        conv_weight.weights->data[i] = 0.1 * i;
-        //conv_weight.weights->data[i] = 1.0f;
+        //conv_weight.weights->data[i] = 0.1 * i;
+        conv_weight.weights->data[i] = 1.0f;
     }
 
-    bias_shape.num_dims = 1;
-    bias_shape.dims[0] = 2;
+    //bias_shape.num_dims = 1;
+    //bias_shape.dims[0] = 2;
 
     //conv_weight.bias = matrix_alloc_empty(bias_shape);
     //conv_weight.bias->data = bias;
 
-    conv_weight.bias = matrix_alloc(bias_shape);
+    conv_weight.bias = matrix_alloc(1, 2);
 	//memset(conv_weight.bias->data, 1, conv_weight.bias->shape.size * sizeof(float));	
 	for(int i = 0; i < conv_weight.bias->shape.size; i++)
     {
         conv_weight.bias->data[i] = 1.0f;
     }
 
-    matrix_print(input_data);
-    matrix_print(conv_weight.weights);
-    matrix_print(conv_weight.bias);
+    matrix_print(input_data, "input_data");
+    matrix_print(conv_weight.weights, "weights");
+    matrix_print(conv_weight.bias, "bias");
 
     conv_load_weight(layer, &conv_weight);
     

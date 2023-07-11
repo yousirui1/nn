@@ -1,153 +1,143 @@
 #include "base.h"
 #include "matrix.h"
 
-#if 0
-//划窗区域转换成2 列矩阵
-void im2col_cpu(float *data_im, int channels, int height, int width,
-        int ksize, int stride, int pad, float *data_col)
-{
-    int c, h, w;
 
-    int height_col = (height + 2 * pad - ksize) / stride + 1;
-    int width_col = (width + 2 * pad - ksize) / stride + 1;
-    int channel_col = channel * ksize * ksize;
-    //划窗列矩阵 （height_col * width_col, channel_col）
-
-#if 0
-    for(c = 0; c < channel_col; c++)
-    {
-        for(h = 0; h < height_col; h++)
-        {
-            for(w = 0; w < width_col; w ++)
-            {
-
-                data_col[c][h][w] = data_im()
-            }
-        }
-    }
-#endif
-    for(h = 0; h < height_col; h++)
-    {
-        for(w = 0; w < width_col; w++)
-        {
-            int im_row = h * stride;
-            int im_col = w * stride;
-
-            data_col[h][w] = 
-        }
-    }
-}
-
-//#define N 0
-#define C 2
-#define H 0
-#define W 1
-
-int test(matrix_t *data, int ksize, int stride, int pad, matrix_t *data_col)
-{
-    int c, h, w;
-    int channel_col = data_col->shape.dims[C];
-    int height_col = data_col->shape.dims[H];
-    int width_col = data_col->shape.dims[W];
-    int im_col, im_row, c_im, h_offset, w_offset;
-    int height = data->shape.dims[H];
-    int width = data->shape.dims[W];
-    int channel = data->shape.dims[C];
-    int num_dims = data->shape.num_dims;
-#if 0
-    for(c = 0; c < channel_col; c++)
-    {
-        int h_offset = (c / ksize) % ksize;
-        int w_offset = c % ksize;
-        int c_im = c / ksize / ksize;
-        for(h = 0;  h < height_col; h++)
-        {
-            for(w = 0; w < width_col; w++)
-            {
-                int im_row = h_offset + h * stride - pad;  //h起始位置
-                int im_col = w_offset + w * stride - pad;  //w起始位置
-                
-               // if(im_row <  0 || im_col < 0 || im_row >= height || im_col >= weight)  //超过data index 都是pad,直接=0
-                //    LOG_DEBUG("0 ");
-                //else
-                    LOG_DEBUG("[%d %d]", im_row, im_col);
-            }
-        }
-    }
-#endif
-    for(h = 0;  h < height_col; h++)
-    {
-        for(w = 0; w < width_col; w++)
-        {
-            for(c = 0; c < channel_col; c++)
-            {
-                h_offset = (c / ksize) % ksize;
-                w_offset = c % ksize;
-                c_im = c / ksize / ksize;
-
-                im_row = h_offset + h * stride - pad;  //h起始位置
-                im_col = w_offset + w * stride - pad;  //w起始位置
-                
-                if(im_row <  0 || im_col < 0 || im_row >= height || im_col >= width)  //超过data index 都是pad,直接=0
-                    matrix_set(data_col, 0.0f, num_dims, h, w, c);
-                else
-                    matrix_set(data_col, matrix_get(data, num_dims, im_row, im_col, c_im),  num_dims, h, w, c);
-            }
-        }
-    }
-}
-
-
-
+//#define NN_TEST 1
+#if NN_TEST
 int main(int argc, char *argv[])
 {
-    float input[25];
-    float filter[] = {
-        1, 0, -1,
-        1, 0, -1,
-        1, 0, -1,
-    };
+    struct nn_t nn; 
+    struct shape_t input_shape, reshape;
+    int out_channel = 4, kernel_height = 2, kernel_width = 5, stride_height = 1, stride_width= 2;
+    int padding = 0;
+    int activation_type = 2;
+    int padding_h = 1, padding_w = 2, padding_c = 0;
+    int is_train;
+    int offset = 0;     // to do
 
-    //h, w, c
-    //c, h, w
+    matrix_t *input_data = NULL;
+
+    input_shape.num_dims = 4;
+    input_shape.dims[N] = 1;
+    input_shape.dims[H] = 2;
+    input_shape.dims[W] = 257;
+    input_shape.dims[C] = 1;
+
+    input_data = matrix_empty_shape(input_shape);
+    input_data->data = input;
+
+    nn_init(&nn, 1, "test_nn");
+
+    reshape.num_dims = 4;
+    reshape.dims[N] = 1;
+    reshape.dims[H] = 2;
+    reshape.dims[W] = 257; 
+    reshape.dims[C] = 1;  
+
+    /* -------------- block 0 -----------------*/
+    nn_add_layer(&nn, INPUT_LAYER, "input", 1, &reshape);
+    out_channel = 4; kernel_height = 2; kernel_width = 5; stride_height = 1; stride_width= 2;
+    nn_add_layer(&nn, CONV_LAYER, "conv", 6, &out_channel, &kernel_height, 
+                                &kernel_width,&stride_height, &stride_width, &padding); 
+
+    nn_add_layer(&nn, BN_LAYER, "bn", 1, &is_train);
+    padding_h = 1, padding_w = 2;
+    offset = 520;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu", 4, "p_relu",  &padding_h, &padding_w, &offset);
+
+    /* -------------- block 1 -----------------*/
+
+    out_channel = 4; kernel_height = 2; kernel_width = 3; stride_height = 1; stride_width= 2;
+    nn_add_layer(&nn, CONV_LAYER, "conv_1", 6,  &out_channel, &kernel_height,
+                            &kernel_width, &stride_height, &stride_width, &padding);
+
+    nn_add_layer(&nn, BN_LAYER, "bn_1", 1, &out_channel);
+    padding_h = 1, padding_w = 1, padding_c = 0;
+    offset = 260;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu_1", 4, "p_relu", &padding_h, &padding_w, &offset);
+
+    /* -------------- block 2 -----------------*/
+
+    out_channel = 4; kernel_height = 2; kernel_width = 3; stride_height = 1; stride_width= 2;
+    nn_add_layer(&nn, CONV_LAYER, "conv_2", 6,  &out_channel, &kernel_height,
+                            &kernel_width, &stride_height, &stride_width, &padding);
 
 
-    matrix_t *mat = matrix_empty(3, 5, 5, 1);
-    mat->data = input;
-    matrix_t *weights = matrix_empty(3, 1, 3, 3);
-    weights->data = filter;
+    nn_add_layer(&nn, BN_LAYER, "bn_2", 1, &out_channel);
+    padding_h = 1, padding_w = 2, padding_c = 0;
+    offset = 140;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu_2", 4, "p_relu", &padding_h, &padding_w, &offset);
 
-    matrix_print(weights);
+    /* -------------- block 3 -----------------*/
+    out_channel = 8; kernel_height = 2; kernel_width = 3; stride_height = 1; stride_width= 1;
+    nn_add_layer(&nn, CONV_LAYER, "conv_3", 6,  &out_channel, &kernel_height,
+                            &kernel_width, &stride_height, &stride_width, &padding);
 
-    for(int i = 0; i < 25; i++)
-    {
-        input[i] = 0.1 * i;
-    }
-    matrix_print(mat);
+    nn_add_layer(&nn, BN_LAYER, "bn_3", 1, &out_channel);
+    padding_h = 1, padding_w = 2;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu_3", 4, "p_relu", &padding_h, &padding_w, &offset);
 
-    int height = 5;
-    int width = 5;
-    int channel = 1;
-    int pad = 0;
-    int ksize = 3;
-    int stride = 1;
 
-    int height_col = (height + 2*pad - ksize) / stride + 1;
-    int weight_col = (height + 2*pad - ksize) / stride + 1;
-    int channel_col = channel * ksize * ksize; 
+    /* -------------- block 4 -----------------*/
+    out_channel = 8; kernel_height = 2; kernel_width = 3; stride_height = 1; stride_width= 1;
+    nn_add_layer(&nn, CONV_LAYER, "conv_4", 6,  &out_channel, &kernel_height,
+                            &kernel_width, &stride_height, &stride_width, &padding);
 
-    matrix_t *col = matrix_alloc(3, channel_col,  height_col, weight_col);
+    nn_add_layer(&nn, BN_LAYER, "bn_4", 1, &out_channel);
+    padding_h = 0, padding_w = 0;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu_4", 4, "p_relu", &padding_h, &padding_w, &offset);
 
-    matrix_print(col);
+#if 0
+    /* ----------  block 5 -------------------- */
+     out_channel = 8; kernel_height = 2; kernel_width = 3; stride_height = 1; stride_width= 1;
+    nn_add_layer(&nn, CONV_LAYER, "conv_transpose", 6,  &out_channel, &kernel_height, 
+                            &kernel_width, &stride_height, &stride_width, &padding); 
 
-    //shape_print(col->shape);
-    //展开
+    nn_add_layer(&nn, BN_LAYER, "bn_5", 1, &out_channel); 
+    padding_h = 0, padding_w = 0;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu_5", 3, "p_relu", &padding_h, &padding_w);
 
-    for(int n = 0; n < 1; n++)
-    {
-        test(mat, ksize, stride, pad, col);
-        gemm(0, 0, m, n, k, 1, a, k, b, n, 1, c, n);
-        //
-    }
-}
+    /* ----------  block 6 -------------------- */
+     out_channel = 8; kernel_height = 2; kernel_width = 3; stride_height = 1; stride_width= 1;
+    nn_add_layer(&nn, CONV_LAYER, "conv_transpose_1", 6,  &out_channel, &kernel_height, 
+                            &kernel_width, &stride_height, &stride_width, &padding); 
+
+    nn_add_layer(&nn, BN_LAYER, "bn_6", 1, &out_channel); 
+    padding_h = 0, padding_w = 0;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu_6", 3, "p_relu", &padding_h, &padding_w);
+
+
+    /* ----------  block 7 -------------------- */
+    out_channel = 4; kernel_height = 2; kernel_width = 3; stride_height = 1; stride_width= 2;
+    nn_add_layer(&nn, CONV_LAYER, "conv_transpose_2", 6,  &out_channel, &kernel_height, 
+                            &kernel_width, &stride_height, &stride_width, &padding); 
+
+    nn_add_layer(&nn, BN_LAYER, "bn_7", 1, &out_channel); 
+    padding_h = 0, padding_w = 0;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu_7", 3, "p_relu", &padding_h, &padding_w);
+
+
+    /* ----------  block 8 -------------------- */
+    out_channel = 4; kernel_height = 2; kernel_width = 3; stride_height = 1; stride_width= 2;
+    nn_add_layer(&nn, CONV_LAYER, "conv_transpose_2", 6,  &out_channel, &kernel_height, 
+                            &kernel_width, &stride_height, &stride_width, &padding); 
+
+    // decode 
+    nn_add_layer(&nn, BN_LAYER, "bn_8", 1, &out_channel); 
+    padding_h = 0, padding_w = 0;
+    nn_add_layer(&nn, ACTIVATION_LAYER, "p_relu_8", 3, "p_relu", &padding_h, &padding_w);
+
+    out_channel = 1; kernel_height = 2; kernel_width = 5; stride_height = 1; stride_width= 2;
+    nn_add_layer(&nn, CONV_LAYER, "conv_transpose", 6,  &out_channel, &kernel_height, 
 #endif
+
+    //nn_load_layer_weight(&nn);
+    nn_load_weight(&nn);
+
+
+    nn_forward(&nn, input_data);
+    //nn_loss(&nn);
+}
+#endif //NN_TEST
+
+

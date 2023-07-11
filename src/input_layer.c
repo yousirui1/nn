@@ -53,7 +53,6 @@ struct matrix_t *input_layer_forward(struct layer_t *layer, struct matrix_t *inp
     return input_data;
 }
 
-
 struct matrix_t *input_layer_backward(struct layer_t *layer, struct matrix_t *input_data)
 {
 

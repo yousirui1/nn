@@ -112,12 +112,12 @@ void gemm_cpu(int TA, int TB, int iM, int iN, int iK, float ALPHA,
     }
     // 根据需要，调用下面四种函数之一
     if(!TA && !TB)
-        gemm_nn(iM, iN, iK, ALPHA,fA,lda, fB, ldb,fC,ldc);
+        gemm_nn(iM, iN, iK, ALPHA, fA, lda, fB, ldb, fC, ldc);
     else if(TA && !TB)
-        gemm_tn(iM, iN, iK, ALPHA,fA,lda, fB, ldb,fC,ldc);
+        gemm_tn(iM, iN, iK, ALPHA, fA, lda, fB, ldb, fC, ldc);
     else if(!TA && TB)
-        gemm_nt(iM, iN, iK, ALPHA,fA,lda, fB, ldb,fC,ldc);
+        gemm_nt(iM, iN, iK, ALPHA, fA, lda, fB, ldb, fC, ldc);
     else
-        gemm_tt(iM, iN, iK, ALPHA,fA,lda, fB, ldb,fC,ldc);
+        gemm_tt(iM, iN, iK, ALPHA, fA, lda, fB, ldb, fC, ldc);
 }
 

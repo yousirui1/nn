@@ -37,7 +37,7 @@ int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar);
 matrix_t* matrix_sum(matrix_t *dst, matrix_t *src,  float scalar);
 //matrix_t *matrix_multiply(matrix_t *a, matrix_t *b, int cols);
 //int matrix_apply_copy(matrix_t *dst, matrix_t *src);
-int matrix_apply_copy(matrix_t *dst, matrix_t *src, int pos);
+int matrix_apply_copy(matrix_t *dst, int dst_pos, matrix_t *src, int src_pos, int len);
 void matrix_print(matrix_t* mat, const char *name);
 //float matrix_get(const matrix_t *mat, int row, int col);
 //void matrix_set(matrix_t *mat, int row, int col, float value);
@@ -45,16 +45,11 @@ void matrix_print(matrix_t* mat, const char *name);
 int get_shape_size(shape_t *shape);
 void shape_print(shape_t shape);
 
+float matrix_log_energy(matrix_t *mat);
+
 
 matrix_t *matrix_multiply(const matrix_t *mat1, const matrix_t *mat2);
 
-struct matrix3d_t{
-    int rows; 
-    int cols;
-    int channels;
-    float *data;
-};
 
-typedef struct matrix3d_t matrix3d_t;
 
 #endif //  __MATRIX_H__

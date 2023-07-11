@@ -121,8 +121,6 @@ int matrix_set(matrix_t *mat, float value, int num_dims, ...)
     return SUCCESS;
 }
 
-
-
 matrix_t *matrix_alloc(int num_dims, ...)
 {
     matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
@@ -142,7 +140,6 @@ matrix_t *matrix_alloc(int num_dims, ...)
     }
     return out;
 }
-
 
 matrix_t *matrix_alloc_shape(shape_t shape)
 {
@@ -211,14 +208,15 @@ matrix_t *matrix_copy(matrix_t *src)
     return out;
 }
 
-int matrix_apply_copy(matrix_t *dst, matrix_t *src, int pos)
+
+int matrix_apply_copy(matrix_t *dst, int dst_pos, matrix_t *src, int src_pos, int len)
 {
-    if(pos + src->shape.size > dst->shape.size)
+    if(dst_pos + len > dst->shape.size)
     {
-        LOG_DEBUG("matrix_apply_copy error pos %d src %d dst %d", pos, src->shape.size, dst->shape.size);
+        LOG_DEBUG("matrix_apply_copy error dst_pos %d len %d dst size %d", dst_pos, len, dst->shape.size);
         return ERROR;
     }
-    memcpy(dst->data + pos, src->data, sizeof(float) * src->shape.size);
+    memcpy(dst->data + dst_pos, src->data + src_pos, sizeof(float) * len);
     return SUCCESS;
 }
 
@@ -250,10 +248,41 @@ void matrix_print(matrix_t* mat, const char *name)
     printf("\n");
 }
 
+float matrix_log_energy(matrix_t *mat)
+{
+    float energy = 0.0f;
+    float epsilon = FLT_EPSILON;
+    float max_energy = 0.0f;
+    int i = 0;
 
-#if 0
+    assert(mat->shape.num_dims == 1);   //signal frame
+
+    for(i = 0; i < mat->shape.size; i++)
+    {
+        energy += mat->data[i] * mat->data[i];
+    }
+    max_energy = (energy > epsilon) ? energy : epsilon;
+    return logf(max_energy);
+}
+
+int matrix_apply_pow(matrix_t *mat)
+{
+
+}
+
+int matrix_apply_floor(matrix_t *mat)
+{
+
+}
+
+int matrix_apply_log(matrix_t *mat)
+{
+
+}
+
 int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar)
 {
+#if 0
     int i;
     int size = 0;
     if(src->rows != dst->rows || src->cols != dst->cols)
@@ -268,10 +297,12 @@ int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar)
         dst->data[i] += (src->data[i] * scalar);
     }
     return SUCCESS;
+#endif
 }
 
 matrix_t* matrix_sum(matrix_t *dst, matrix_t *src,  float scalar)
 {
+#if 0
     int i;
     int size = 0;
     matrix_t *out = NULL;
@@ -290,31 +321,12 @@ matrix_t* matrix_sum(matrix_t *dst, matrix_t *src,  float scalar)
         }
     }
     return NULL;
-}
 #endif
+}
 
-
-
+matrix_t *matrix_mul(const matrix_t *mat1, const matrix_t *mat2)
+{
 #if 0
-matrix_t *matrix_multiply(matrix_t *a, matrix_t *b, int k)
-{
-    matrix_t *out = matrix_alloc(a->rows, b->cols);
-    if(out)
-    {
-        gemm(false, false, a->rows, b->cols, k, a->data, b->data, 1.0f, out->data);
-        return out;
-    }
-    return NULL;
-}
-
-matrix_t *matrix_normalized(matrix_t *src, matrix_t *mean, matrix_t *variance, 
-                                int spatial_dim, int num_channels)
-{
-
-}
-
-matrix_t *matrix_multiply(const matrix_t *mat1, const matrix_t *mat2)
-{
     int m = mat1->rows;
     int n = mat1->cols;
     int p = mat2->cols;
@@ -334,10 +346,18 @@ matrix_t *matrix_multiply(const matrix_t *mat1, const matrix_t *mat2)
             matrix_set(output, i, j, sum);
         }
     }
-
     return output;
-}
+
+    matrix_t *out = matrix_alloc(a->rows, b->cols);
+    if(out)
+    {
+        gemm(false, false, a->rows, b->cols, k, a->data, b->data, 1.0f, out->data);
+        return out;
+    }
+    return NULL;
 
 #endif
+}
+
 
 

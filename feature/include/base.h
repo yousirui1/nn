@@ -9,6 +9,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <float.h>
+#include <assert.h>
 
 #include "log.h"
 

@@ -11,7 +11,6 @@ void add_biases(float* out, float* biases, int out_c, int out_cols) {
     }   
 }
 
-
 void transpose_weights(float *weights, int channels, int size_h, int size_w)
 {
     float *tmp = (float *)calloc(size_h * size_w * channels, sizeof(float));
@@ -27,3 +26,4 @@ void transpose_weights(float *weights, int channels, int size_h, int size_w)
     memcpy(weights, tmp, size_h * size_w * channels * sizeof(float));
     free(tmp);
 }
+

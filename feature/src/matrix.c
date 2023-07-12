@@ -290,6 +290,26 @@ int matrix_apply_log(matrix_t *mat)
     return SUCCESS;
 }
 
+int matrix_zero(matrix_t *mat, int pos, int len)
+{
+    int i;
+    for(i = pos; i < pos + len; i++)
+        mat->data[i] = 0.0f;
+
+}
+
+int matrix_resize(matrix_t *mat, int size)
+{
+    if(mat)
+    {
+        //to do default 1 dim
+        mat->shape.num_dims = 1;
+        mat->shape.dims[0] = size;
+        mat->shape.size = size;
+        mat->data = calloc(mat->data, size);
+    }
+}
+
 int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar)
 {
 #if 0

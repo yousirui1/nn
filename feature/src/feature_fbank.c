@@ -28,16 +28,19 @@ struct fbank_t* fbank_init(struct fbank_option_t fbank_opt)
 {
    struct fbank_t *fbank = (struct fbank_t *)malloc(sizeof(struct fbank_t));
 
-   if(fbank_opt.energy_floor > 0.0)
-       fbank->log_energy_floor = logf(fbank_opt.energy_floor);
+   if(fbank)
+   {
+        if(fbank_opt.energy_floor > 0.0)
+            fbank->log_energy_floor = logf(fbank_opt.energy_floor);
 
-
-   fbank->fbank_opt = fbank_opt;
+        fbank->fbank_opt = fbank_opt;
 
    //if()
         ;
     //fbank->mel_bands = matrix_alloc();
     //mel_bands_get();
+   }
+    return fbank;
 }
 
 int need_raw_log_energy(struct fbank_option_t fbank_opt)

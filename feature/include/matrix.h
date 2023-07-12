@@ -34,6 +34,7 @@ void matrix_free(matrix_t *mat);
 
 int matrix_apply_log(matrix_t *mat);
 int matrix_apply_floor(matrix_t *mat, float val);
+int matrix_resize(matrix_t *mat, int size);
 
 matrix_t *matrix_copy(matrix_t *src);
 int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar);
@@ -41,6 +42,7 @@ matrix_t* matrix_sum(matrix_t *dst, matrix_t *src,  float scalar);
 //matrix_t *matrix_multiply(matrix_t *a, matrix_t *b, int cols);
 //int matrix_apply_copy(matrix_t *dst, matrix_t *src);
 int matrix_apply_copy(matrix_t *dst, int dst_pos, matrix_t *src, int src_pos, int len);
+int matrix_zero(matrix_t *mat, int pos, int len);
 void matrix_print(matrix_t* mat, const char *name);
 //float matrix_get(const matrix_t *mat, int row, int col);
 //void matrix_set(matrix_t *mat, int row, int col, float value);

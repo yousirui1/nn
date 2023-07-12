@@ -2,7 +2,9 @@
 #define __FEATURE_FBANK_H__
 
 #include <stdbool.h>
+#include "fft.h"
 
+#if 0
 struct frame_option_t
 {
     float sample_rate;
@@ -19,11 +21,12 @@ struct frame_option_t
     bool allow_upsample;
     int max_feature_vectors;
 };
+#endif
 
 struct fbank_option_t
 {
     struct frame_option_t frame_opt;
-    //struct mel_option mel_opt
+    struct mel_bands_option_t mel_bands_opt;
     bool use_energy;
     float energy_floor;
     bool raw_energy;
@@ -36,8 +39,9 @@ struct fbank_option_t
 struct fbank_t
 {
     float log_energy_floor;
-    //matrix_t *mel_banks;
+    struct mel_bands_t *mel_bands;
 
+    struct rdft_t *rdft;
     struct fbank_option_t fbank_opt;
     //(void *)srfft;
     //struct 

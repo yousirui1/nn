@@ -270,14 +270,24 @@ int matrix_apply_pow(matrix_t *mat)
 
 }
 
-int matrix_apply_floor(matrix_t *mat)
+int matrix_apply_floor(matrix_t *mat, float val)
 {
-
+    int i;
+    for(i = 0; i < mat->shape.size; i++)
+    {
+        mat->data[i] = floor(mat->data[i]);
+    }
+    return SUCCESS;
 }
 
 int matrix_apply_log(matrix_t *mat)
 {
-
+    int i;
+    for(i = 0; i < mat->shape.size; i++)
+    {
+        mat->data[i] = logf(mat->data[i]);
+    }
+    return SUCCESS;
 }
 
 int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar)

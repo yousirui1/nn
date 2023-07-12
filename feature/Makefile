@@ -18,7 +18,7 @@ INCLUDES = $(ROOT)/include
 #-------------------------------Source-------------------------------
 #
 #--------------------------------------------------------------------
-SOURCE_PATHS = src 
+SOURCE_PATHS = src fft
 SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
 

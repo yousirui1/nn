@@ -32,6 +32,9 @@ int matrix_set(matrix_t *mat, float value, int num_dims, ...);
 float matrix_get(matrix_t *mat, int num_dims, ...);
 void matrix_free(matrix_t *mat);
 
+int matrix_apply_log(matrix_t *mat);
+int matrix_apply_floor(matrix_t *mat, float val);
+
 matrix_t *matrix_copy(matrix_t *src);
 int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar);
 matrix_t* matrix_sum(matrix_t *dst, matrix_t *src,  float scalar);

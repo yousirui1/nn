@@ -1,6 +1,5 @@
-#ifndef __FFT_H__
-#define __FFT_H__
-
+#ifndef __SRFFT_H__
+#define __SRFFT_H__
 
 struct rdft_t
 {
@@ -15,7 +14,7 @@ struct rdft_t
 };
 
 struct rdft_t *srfft_init(int fft_size);
-int srfft(matrix_t *mat, struct rdft_t *rdft,  bool forward);
+void srfft_deinit(struct rdft_t *rdft);
+int srfft(struct rdft_t *rdft,  bool forward);
 
-
-#endif //  __FFT_H__
+#endif //  __SRFFT_H__

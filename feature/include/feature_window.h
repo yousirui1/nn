@@ -1,6 +1,9 @@
 #ifndef __FEATURE_WINDOW_H__
 #define __FEATURE_WINDOW_H__
 
+#include "matrix.h"
+
+#define M_2PI 6.283185307179586476925286766559005
 
 struct frame_option_t
 {
@@ -19,7 +22,24 @@ struct frame_option_t
     int max_feature_vectors;
 };
 
-void frame_option_init(struct frame_option_t *frame_opt);
+struct window_t
+{
+    struct frame_option_t frame_opt;
+    matrix_t *frame;
+    matrix_t *w;
+};
 
+int32_t window_shift_get(struct frame_option_t frame_opt);
+int32_t window_size_get(struct frame_option_t frame_opt);
+int32_t round_to_power_of_two_near(int32_t n);
+int32_t padding_window_size(struct frame_option_t frame_opt);
+int64_t first_sample_frame(int32_t frame, struct frame_option_t frame_opt);
+
+int frame_option_init(struct frame_option_t *frame_opt);
+
+struct window_t *window_init(struct frame_option_t frame_opt);
+void window_deinit(struct window_t *window);
+
+matrix_t * window_compute(struct window_t *window, int64_t sample_offset, matrix_t *wave, int32_t f,                    float *log_energy_pre_window);
 
 #endif //  __FEATURE_WINDOW_H__

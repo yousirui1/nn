@@ -123,11 +123,12 @@ int matrix_set(matrix_t *mat, float value, int num_dims, ...)
 
 matrix_t *matrix_alloc(int num_dims, ...)
 {
+    int i;
+    va_list args;
     matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
     if(out)
     {
-        int i;
-        va_list args;
+        out->empty = 0;
         out->shape.num_dims = num_dims;
         va_start(args, num_dims);
         for(i = 0; i < num_dims; i++)
@@ -146,6 +147,7 @@ matrix_t *matrix_alloc_shape(shape_t shape)
     matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
     if(out)
     {
+        out->empty = 0;
         out->shape = shape;
         get_shape_size(&out->shape);
         out->data = (float *)malloc(sizeof(float) * out->shape.size);
@@ -153,26 +155,13 @@ matrix_t *matrix_alloc_shape(shape_t shape)
     return out;
 }
 
-
-matrix_t *matrix_empty_shape(shape_t shape)
-{
-    matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
-    if(out)
-    {
-        out->shape = shape;
-        get_shape_size(&out->shape);
-    }
-    return out;
-}
-
-
 matrix_t *matrix_empty(int num_dims, ...)
 {
+    int i;
+    va_list args;
     matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
     if(out)
     {
-        int i;
-        va_list args;
         out->shape.num_dims = num_dims;
         va_start(args, num_dims);
         for(i = 0; i < num_dims; i++)
@@ -180,6 +169,19 @@ matrix_t *matrix_empty(int num_dims, ...)
             out->shape.dims[i] = va_arg(args, int);
         }
         va_end(args);
+        get_shape_size(&out->shape);
+        out->empty = 1;
+    }
+    return out;
+}
+
+matrix_t *matrix_empty_shape(shape_t shape)
+{
+    matrix_t *out = (struct matrix_t *)malloc(sizeof(matrix_t));
+    if(out)
+    {
+        out->empty = 1;
+        out->shape = shape;
         get_shape_size(&out->shape);
     }
     return out;
@@ -190,7 +192,7 @@ void matrix_free(matrix_t *mat)
 {
     if(mat)
     {
-        if(mat->data)
+        if(mat->data && mat->empty == 0)
         {
             free(mat->data);
         }
@@ -226,8 +228,7 @@ void matrix_print(matrix_t* mat, const char *name)
         return;
 
     if(name)
-        printf("%s \n", name);
-
+        printf("%s size %d\n", name, mat->shape.size);
 
     int i, count;
     for(i = 0, count = 0; i < mat->shape.size; i++)
@@ -265,12 +266,17 @@ float matrix_log_energy(matrix_t *mat)
     return logf(max_energy);
 }
 
-int matrix_apply_pow(matrix_t *mat)
+int matrix_apply_pow(matrix_t *mat, float value)
 {
-
+    int i;
+    for(i = 0; i < mat->shape.size; i++)
+    {
+        mat->data[i] = pow(mat->data[i], value);
+    }
+    return SUCCESS;
 }
 
-int matrix_apply_floor(matrix_t *mat, float val)
+int matrix_apply_floor(matrix_t *mat, float value)
 {
     int i;
     for(i = 0; i < mat->shape.size; i++)
@@ -293,101 +299,163 @@ int matrix_apply_log(matrix_t *mat)
 int matrix_zero(matrix_t *mat, int pos, int len)
 {
     int i;
-    for(i = pos; i < pos + len; i++)
-        mat->data[i] = 0.0f;
+    if(mat)
+    {
+        for(i = pos; i < pos + len; i++)
+            mat->data[i] = 0.0f;
 
+        return SUCCESS;
+    }
+    return ERROR;
 }
 
-int matrix_resize(matrix_t *mat, int size)
+int matrix_resize(matrix_t *mat, shape_t shape)
 {
     if(mat)
     {
-        //to do default 1 dim
-        mat->shape.num_dims = 1;
-        mat->shape.dims[0] = size;
-        mat->shape.size = size;
-        mat->data = calloc(mat->data, size);
+        mat->shape = shape;
+        get_shape_size(&mat->shape);
+        mat->data = realloc(mat->data, mat->shape.size * sizeof(float));
+        return SUCCESS;
     }
+    return ERROR;
 }
 
-int matrix_apply_sum(matrix_t *dst, matrix_t *src,  float scalar)
+int matrix_apply_mul_element(matrix_t *mat1, matrix_t *mat2)
 {
-#if 0
     int i;
-    int size = 0;
-    if(src->rows != dst->rows || src->cols != dst->cols)
+    if(mat1 && mat2)
     {
-        LOG_DEBUG("matrix shape error");
-        return ERROR;
-    }
-
-    size = src->rows * src->cols;
-    for(i = 0; i < size; i++)
-    {
-        dst->data[i] += (src->data[i] * scalar);
-    }
-    return SUCCESS;
-#endif
-}
-
-matrix_t* matrix_sum(matrix_t *dst, matrix_t *src,  float scalar)
-{
-#if 0
-    int i;
-    int size = 0;
-    matrix_t *out = NULL;
-    if(src->rows != dst->rows || src->cols != dst->cols)
-    {
-        LOG_DEBUG("matrix shape error");
-        return NULL;
-    }
-    out = matrix_alloc(src->rows, src->cols);
-    if(out)
-    {
-        size = src->rows * src->cols;
-        for(i = 0; i < size; i++)
+        if(mat1->shape.size != mat2->shape.size)
         {
-            out->data[i] = dst->data[i] + (src->data[i] * scalar);
+            LOG_DEBUG("mat size %d mat size %d no eq", mat1->shape.size, mat2->shape.size);
+            return ERROR;
         }
+        for(i = 0; i < mat1->shape.size; i++)
+        {
+            mat1->data[i] = mat1->data[i] * mat2->data[i];;
+        }
+        return SUCCESS;
+    }
+    return ERROR;
+}
+
+float matrix_energy(matrix_t *mat1, matrix_t *mat2)
+{
+    int i;
+    float value = 0.0f;
+    if(mat1->shape.size != mat2->shape.size)
+        return 0.0f;
+
+    for(i = 0; i < mat1->shape.size; i++)
+    {
+        value += mat1->data[i] * mat2->data[i];
+    }
+    return value;
+}
+
+int matrix_apply_add(matrix_t *dst, matrix_t *src,  float scalar)
+{
+    int i;
+
+    if(dst && src)
+    {
+        if(src->shape.size != dst->shape.size)
+        {
+            LOG_DEBUG("matrix shape error");
+            return ERROR;
+        }
+
+        for(i = 0; i < src->shape.size; i++)
+        {
+            dst->data[i] += (src->data[i] * scalar);
+        }
+        return SUCCESS;
+    }
+    return ERROR;
+}
+
+matrix_t* matrix_add(matrix_t *mat1, matrix_t *mat2,  float scalar)
+{
+    int i;
+    if(mat1 && mat2)
+    {
+        if(mat1->shape.size != mat2->shape.size)
+        {
+            LOG_DEBUG("matrix shape mat1 %d mat2 %derror", mat1->shape.size, mat2->shape.size);
+            return NULL;
+        }
+
+        matrix_t *out = matrix_alloc_shape(mat1->shape);
+        for(i = 0; i < mat1->shape.size; i++)
+        {
+            out->data[i] =  mat1->data[i] + mat2->data[i];
+        }
+        return out;
     }
     return NULL;
-#endif
 }
 
 matrix_t *matrix_mul(const matrix_t *mat1, const matrix_t *mat2)
 {
-#if 0
-    int m = mat1->rows;
-    int n = mat1->cols;
-    int p = mat2->cols;
-
-    int i, j, k;
-    matrix_t *output = matrix_alloc(m, p);
-    for(i = 0; i < m; i ++)
-    {
-        for(j = 0; j < p; j++)
-        {
-            float sum = 0.0;
-            for(k = 0; k < n; k++)
-            {
-                matrix_set(output, i, j, sum);
-                sum = matrix_get(mat1, i, k) * matrix_get(mat2, k, j);
-            }
-            matrix_set(output, i, j, sum);
-        }
-    }
-    return output;
-
-    matrix_t *out = matrix_alloc(a->rows, b->cols);
-    if(out)
-    {
-        gemm(false, false, a->rows, b->cols, k, a->data, b->data, 1.0f, out->data);
-        return out;
-    }
     return NULL;
-
-#endif
 }
 
+int matrix_apply_mul(const matrix_t *dst, const matrix_t *src)
+{
+    return SUCCESS;
+}
 
+int matrix_power_spectrum(matrix_t *mat)
+{
+    int32_t i;
+    int32_t dim = mat->shape.size;
+    int32_t half_dim = dim / 2;
 
+    float first_energy = mat->data[0] * mat->data[0];
+    float last_energy = mat->data[1] * mat->data[1];
+    float real = 0.0f, im = 0.0f;
+
+    /*  
+     * now we have in waveform, first half of complex spectrum
+     * it's stored as [real0, realN/2, real1, im1, real2, im2, ...]
+     */
+    for(i = 1; i < half_dim; i++)
+    {   
+        real = mat->data[i * 2]; 
+        im = mat->data[i * 2 + 1]; 
+
+        mat->data[i] = real * real + im * im; 
+    }   
+    mat->data[0] = first_energy;
+    mat->data[half_dim] = last_energy;
+    return SUCCESS;
+}
+
+int matrix_apply_add_value(matrix_t *mat, float value)
+{
+    int i;
+    if(mat)
+    {
+        for(i = 0; i < mat->shape.size; i++)
+        {   
+            mat->data[i] += value;
+        } 
+        return SUCCESS;
+    }
+    return ERROR;
+}
+
+float matrix_sum(matrix_t *mat)
+{
+    int i;
+    float value = 0.0f;
+    if(mat)
+    {
+        for(i = 0; i < mat->shape.size; i++)
+        {   
+            value += mat->data[i];
+        } 
+    }
+    return value;
+}

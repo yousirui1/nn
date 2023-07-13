@@ -12,7 +12,7 @@ ROOT=.
 #
 # INCLUDES = $(addprefix -I,$(INCLUDES)) # add -I prefix
 #--------------------------------------------------------------------
-INCLUDES = $(ROOT)/include 
+INCLUDES = $(ROOT)/include $(ROOT)/fft
 
 
 #-------------------------------Source-------------------------------

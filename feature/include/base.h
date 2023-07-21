@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <float.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "log.h"
 

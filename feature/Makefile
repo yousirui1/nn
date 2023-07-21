@@ -12,15 +12,16 @@ ROOT=.
 #
 # INCLUDES = $(addprefix -I,$(INCLUDES)) # add -I prefix
 #--------------------------------------------------------------------
-INCLUDES = $(ROOT)/include $(ROOT)/fft
+INCLUDES = $(ROOT)/include $(ROOT)/fft ../base/include
 
 
 #-------------------------------Source-------------------------------
 #
 #--------------------------------------------------------------------
-SOURCE_PATHS = src fft
+SOURCE_PATHS = src fft 
 SOURCE_FILES = $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.cpp))
 SOURCE_FILES += $(foreach dir,$(SOURCE_PATHS),$(wildcard $(dir)/*.c))
+SOURCE_FILES += ../base/src/wav.c
 
 #-----------------------------Library--------------------------------
 #

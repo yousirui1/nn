@@ -238,7 +238,7 @@ void matrix_print(matrix_t* mat, const char *name)
             printf("line %d: ", count / 10);
         }
 
-        printf("%.4f ", mat->data[i]);
+        printf("%.8f ", mat->data[i]);
         count ++;
 
         if(count % 10 == 0)
@@ -276,12 +276,14 @@ int matrix_apply_pow(matrix_t *mat, float value)
     return SUCCESS;
 }
 
+
 int matrix_apply_floor(matrix_t *mat, float value)
 {
     int i;
     for(i = 0; i < mat->shape.size; i++)
     {
-        mat->data[i] = floor(mat->data[i]);
+        //mat->data[i] = floor(mat->data[i]);
+        mat->data[i] = mat->data[i] < value ? value : mat->data[i];
     }
     return SUCCESS;
 }

@@ -65,14 +65,13 @@ void srfft_deinit(struct rdft_t *rdft)
 int srfft(struct rdft_t *rdft,  bool forward)
 {
     int i;
-
     if(NULL == rdft)
     {
         LOG_DEBUG("rdft is NULL");
         return ERROR;
     }
     WebRtc_rdft(rdft->fft_size, 1, rdft->fft_data, rdft->ip, rdft->w);
-
+    
     //to do 
     rdft->real[0] = rdft->fft_data[0];
     //rdft->real[rdft->fft_l21 - 1] = rdft->fft_data[1];

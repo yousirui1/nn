@@ -147,10 +147,17 @@ struct mel_bands_t *mel_bands_init(struct mel_bands_option_t mel_bands_opt,
     vtln_low = mel_bands_opt.vtln_low;
     vtln_high = mel_bands_opt.vtln_high;
 
+    LOG_DEBUG("low_freq %.8f high_freq %.8f ", low_freq, high_freq);
+
+    LOG_DEBUG("mel_low_freq %.8f mel_high_freq %.8f mel_freq_delta %.8f ", mel_low_freq,mel_high_freq,mel_freq_delta);
+
+
     if(vtln_high < 0.0)
     {
         vtln_high += nyquist;
     }
+
+    LOG_DEBUG("vtln_low %.8f vtln_high %.8f ", vtln_low, vtln_high);
 
     if(vtln_warp_factor != 1.0 &&
          (vtln_low < 0.0 || vtln_low <= low_freq
@@ -282,6 +289,9 @@ matrix_t *mel_bands_compute(struct mel_bands_t *mel_bands, matrix_t *power_spect
     {
         offset = mel_bands->bins[i].offset;
         size = mel_bands->bins[i].size;
+
+        //printf("size %d offset %d \n", size, offset);
+
         energy = power_energy(mel_bands->bins[i].data, &power_spectrum->data[offset], size);
 
         if(mel_bands->mel_bands_opt.htk_mode && energy < 1.0)

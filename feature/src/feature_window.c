@@ -48,7 +48,6 @@ int32_t window_num_frames(int64_t num_samples, struct frame_option_t frame_opt, 
 {
     int32_t frame_shift = window_shift_get(frame_opt);
     int32_t frame_length = window_size_get(frame_opt);
-
     if(frame_opt.snip_edges)
     {   
         /*  
@@ -87,7 +86,6 @@ void dither(matrix_t *waveform, float dither_valeu)
     if(0.0 == dither_valeu)
         return ;
     int32_t dim = waveform->shape.size;
-    
     //to do
 }
 
@@ -97,7 +95,7 @@ void preemphasize(matrix_t *waveform, float preemph_coeff)
     if(0.0 == preemph_coeff)
         return ;
 
-    for(i = waveform->shape.size - 1; i < 0; i--)
+    for(i = waveform->shape.size - 1; i > 0; i--)
     {   
         waveform->data[i] -= preemph_coeff * waveform->data[i - 1]; 
     }   
@@ -189,7 +187,6 @@ void window_deinit(struct window_t *window)
         if(window->w)
             matrix_free(window->w);
 
-
         if(window->frame)
             matrix_free(window->frame);
 
@@ -212,6 +209,8 @@ void process_window(struct window_t *window, matrix_t *frame,  float *log_energy
     int32_t frame_length = window_size_get(frame_opt);
 	float energy = 0.0f;
 
+    LOG_DEBUG("frame_opt.dither %.2f frame_opt.remove_dc_offset %d frame_opt.preemph_coeff %.2f",
+             frame_opt.dither, frame_opt.remove_dc_offset, frame_opt.preemph_coeff);
     if(0.0 != frame_opt.dither)
         dither(frame, frame_opt.dither);
 
@@ -220,6 +219,7 @@ void process_window(struct window_t *window, matrix_t *frame,  float *log_energy
 
     if(NULL != log_energy_pre_window)
     {
+        LOG_DEBUG("log_energy_pre_window ok !!!!!!!!!1");
         energy = max(matrix_energy(frame, frame), FLT_EPSILON);
         *log_energy_pre_window = logf(energy);
     }
@@ -253,6 +253,10 @@ matrix_t *window_compute(struct window_t *window, int64_t sample_offset, matrix_
 	int wave_dim = wave->shape.size;
 	int s = 0;
     matrix_t *frame = NULL;
+
+    LOG_DEBUG("frame_length %d frame_length_padding %d num_samples %lld start_sample %lld "
+            " end_sample %lld wave_start %d wave_end %d wave_dim %d", 
+            frame_length, frame_length_padding, num_samples, start_sample, end_sample, wave_start, wave_end, wave_dim);
 
     if(frame_opt.snip_edges)
     {
@@ -288,11 +292,13 @@ matrix_t *window_compute(struct window_t *window, int64_t sample_offset, matrix_
         }
     }
 
+
     if(frame_length_padding > frame_length)
         matrix_zero(window->frame, frame_length, frame_length_padding - frame_length);
 
     frame = matrix_empty(1, frame_length);
     frame->data = window->frame->data;
+
 
     process_window(window, frame, log_energy_pre_window);
     matrix_free(frame);

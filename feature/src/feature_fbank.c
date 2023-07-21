@@ -45,10 +45,11 @@ struct fbank_t *fbank_init(struct fbank_option_t fbank_opt, float vtln_warp)
         fbank->log_energy_floor = logf(fbank_opt.energy_floor);
 
     fbank->window = window_init(fbank_opt.frame_opt);
-    fbank->rdft = srfft_init(fbank_opt.fft_size);
     fbank->mel_bands = mel_bands_init(fbank_opt.mel_bands_opt, fbank_opt.frame_opt, vtln_warp);
 
     fbank->fbank_opt = fbank_opt;
+    fbank->fbank_opt.fft_size = padding_window_size(fbank_opt.frame_opt);
+    fbank->rdft = srfft_init(fbank->fbank_opt.fft_size);
     return fbank;
 }
 
@@ -92,13 +93,12 @@ static int fbank_frame_compute(struct fbank_t * fbank, matrix_t *frame, matrix_t
     if(fbank_opt.use_energy && !fbank_opt.raw_energy)
         signal_raw_log_energy = matrix_log_energy(frame);
 
+
     if(fbank->rdft)
     {   
-        //to do
         memcpy(fbank->rdft->fft_data , frame->data, fbank_opt.fft_size * sizeof(float));
         srfft(fbank->rdft, true);
         memcpy(frame->data, fbank->rdft->input_comples_spec, fbank_opt.fft_size * sizeof(float));
-        //matrix_print(frame, "frame");
     }
     else
 	{
@@ -108,6 +108,7 @@ static int fbank_frame_compute(struct fbank_t * fbank, matrix_t *frame, matrix_t
 
     /* convert the fft into a power spectrum */
     matrix_power_spectrum(frame);
+
 
     if(NULL == fbank->power_spectrum)
     {
@@ -121,15 +122,20 @@ static int fbank_frame_compute(struct fbank_t * fbank, matrix_t *frame, matrix_t
 
     matrix_apply_copy(power_spectrum, 0, frame, 0, frame->shape.size / 2 + 1);
 
+
     if(!fbank_opt.use_power)
         matrix_apply_pow(power_spectrum, 0.5);
 
     mel_offset = ((fbank_opt.use_energy && !fbank_opt.htk_compat) ? 1 : 0);
+
     mel_energies = mel_bands_compute(mel_bands, power_spectrum);
+
+    //matrix_print(mel_energies, "mel_energies");
 
     if(fbank_opt.use_log_fbank)
     {
         matrix_apply_floor(mel_energies, FLT_EPSILON);
+        //matrix_print(mel_energies, "mel_energies");
         matrix_apply_log(mel_energies);
     }
 
@@ -165,6 +171,7 @@ matrix_t* fbank_compute(struct fbank_t *fbank, matrix_t *wave)
     cols_out = mel_bands_opt.num_bins + (fbank_opt.use_energy ? 1 : 0); 
     use_raw_log_energy = need_raw_log_energy(fbank_opt);
 
+    LOG_DEBUG("rows_out %d cols_out %d", rows_out, cols_out);
     if(0 == rows_out)
     {   
         LOG_DEBUG("rows_out must not 0");
@@ -193,6 +200,8 @@ matrix_t* fbank_compute(struct fbank_t *fbank, matrix_t *wave)
     {   
         frame = window_compute(fbank->window, 0, wave, i, 
                                 use_raw_log_energy ? &raw_log_energy : NULL);
+        //LOG_DEBUG("-------------------------");
+        //matrix_print(frame,"window_frame");
         output_row->data = &(output->data[i * cols_out]);
         fbank_frame_compute(fbank, frame, output_row);
     }   

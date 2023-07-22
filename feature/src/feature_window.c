@@ -85,7 +85,7 @@ void dither(matrix_t *waveform, float dither_valeu)
 {
     if(0.0 == dither_valeu)
         return ;
-    int32_t dim = waveform->shape.size;
+    //int32_t dim = waveform->shape.size;
     //to do
 }
 
@@ -200,11 +200,7 @@ void window_deinit(struct window_t *window)
 
 void process_window(struct window_t *window, matrix_t *frame,  float *log_energy_pre_window)
 {
-    if(NULL == window)
-    {
-        LOG_DEBUG("window ptr is NULL");
-        return ERROR;
-    }
+   
     struct frame_option_t frame_opt = window->frame_opt;
     int32_t frame_length = window_size_get(frame_opt);
 	float energy = 0.0f;
@@ -236,7 +232,7 @@ matrix_t *window_compute(struct window_t *window, int64_t sample_offset, matrix_
     if(NULL == window)
     {
         LOG_DEBUG("window ptr is NULL");
-        return ERROR;
+        return NULL;
     }
     struct frame_option_t frame_opt = window->frame_opt;
 

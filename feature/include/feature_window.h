@@ -42,4 +42,6 @@ void window_deinit(struct window_t *window);
 
 matrix_t * window_compute(struct window_t *window, int64_t sample_offset, matrix_t *wave, int32_t f,                    float *log_energy_pre_window);
 
+int32_t window_num_frames(int64_t num_samples, struct frame_option_t frame_opt, bool flush);
+
 #endif //  __FEATURE_WINDOW_H__

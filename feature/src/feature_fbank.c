@@ -66,9 +66,17 @@ void fbank_deinit(struct fbank_t *fbank)
         if(fbank->mel_bands)
             mel_bands_deinit(fbank->mel_bands);
 
+        if(fbank->feature)
+            matrix_free(fbank->feature);
+
+        if(fbank->power_spectrum)
+            matrix_free(fbank->power_spectrum);
+
         fbank->window = NULL;
         fbank->rdft = NULL;
         fbank->mel_bands = NULL;
+        fbank->feature = NULL;
+        fbank->power_spectrum = NULL;
 
         free(fbank);
     }
@@ -128,6 +136,9 @@ static int fbank_frame_compute(struct fbank_t * fbank, matrix_t *frame, matrix_t
 
     mel_offset = ((fbank_opt.use_energy && !fbank_opt.htk_compat) ? 1 : 0);
 
+
+
+
     mel_energies = mel_bands_compute(mel_bands, power_spectrum);
 
     //matrix_print(mel_energies, "mel_energies");
@@ -167,7 +178,7 @@ matrix_t* fbank_compute(struct fbank_t *fbank, matrix_t *wave)
     matrix_t *output = NULL;
     matrix_t *output_row = NULL;
 
-    rows_out = window_num_frames(wave->shape.size, fbank_opt, true);
+    rows_out = window_num_frames(wave->shape.size, frame_opt, true);
     cols_out = mel_bands_opt.num_bins + (fbank_opt.use_energy ? 1 : 0); 
     use_raw_log_energy = need_raw_log_energy(fbank_opt);
 

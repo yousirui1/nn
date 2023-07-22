@@ -30,7 +30,7 @@ static void test_sample()
     LOG_DEBUG("==========TestSimple()=============");
 
     int ret;
-    const char *file_name = "/home/ysr/project/c/open_source/kaldi/src/feat/test_data/test.wav";
+    const char *file_name = "/home/ysr/project/c/audio_analysis_bak/output/wav___slience___label_99.wav";
     WavFile* fp = NULL;
     fp = wav_open(file_name, WAV_OPEN_READ);
 
@@ -78,6 +78,12 @@ static void test_sample()
     matrix_t *feature = fbank_compute(fbank, v);
 
     matrix_print(feature, "feature");
+
+    free(wav_buf);
+    free(wave);
+
+    fbank_deinit(fbank);
+    matrix_free(v);
     return;
 }
 
